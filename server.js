@@ -106,7 +106,9 @@ app.post('/order', async (req, res) => {
 app.post('/status/:txnId', async (req, res) => {
     const merchantTransactionId = req.params.txnId; 
     const merchantId = req.body.merchantId;
-    
+    console.log('Status ID:', merchantTransactionId);
+console.log('Merchant ID:', merchantId);
+
     const keyIndex=1;
     const string=`/pg/v1/status/${merchantId}/${merchantTransactionId}`+key;
     const sha256=crypto.createHash('sha256').update(string).digest('hex');

@@ -42,7 +42,7 @@ app.post('/order', async (req, res) => {
             merchantUserId: req.body.MID,
             amount: req.body.amount * 100,
             currency: req.body.currency,
-            redirectUrl: `http://3.108.87.117:8000/status/${merchantTransactionId}`,
+            redirectUrl: `https://firstlist.in/status/${merchantTransactionId}`,
             redirectMode: 'REDIRECT',
             paymentInstrument:{
                 type: 'PAY_PAGE'

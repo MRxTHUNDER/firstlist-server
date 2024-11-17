@@ -5,8 +5,8 @@ const axios = require('axios');
 const bodyParser = require("body-parser");
 
 const { url } = require('inspector');
-let key = process.env.KEY
-let merchant_id = process.env.MERCHANT_KEY
+let key = '3064fbf3-4d48-458a-8e6d-c086629916f5'
+let merchant_id = 'M22N5T3LZUUAV'
 
 const app = express();
 
@@ -124,11 +124,11 @@ app.post('/status/:txnId', async (req, res) => {
 
         axios.request(options).then(async(response)=>{
             if(response.data.success===true){
-                const url= `http://firstlist.in/DemoDashboard/DemoSuccess`
+                const url= `http://localhost:5173/DemoDashboard/DemoSuccess`
                 return res.redirect(url);
             }
             else{
-                const url= `http://firstlist.in/DemoDashboard/DemoFailure`
+                const url= `http://localhost:5173/DemoDashboard/DemoFailure`
                 return res.redirect(url);
             }
         })

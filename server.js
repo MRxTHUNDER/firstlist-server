@@ -105,6 +105,13 @@ app.post('/order', async (req, res) => {
 
 app.post('/status', async (req, res) => {
     try {
+        console.log('Request body:', req.body);
+
+    const { transactionId } = req.body; // Extract transactionId from req.body
+    if (!transactionId) {
+      return res.status(400).send({ message: 'Transaction ID is required', success: false });
+    }
+    
         const merchantTransactionId = req.query.id;
         const merchantId = merchant_id;
         const keyIndex = 1;

@@ -104,8 +104,8 @@ app.post('/order', async (req, res) => {
 });
 
 app.post('/status/:txnId', async (req, res) => {
-    const  merchantTransactionId=res.req.body.transactionId
-    const merchantId = res.req.body.merchantId
+    const merchantTransactionId = req.params.txnId; 
+    const merchantId = req.body.merchantId;
     
     const keyIndex=1;
     const string=`/pg/v1/status/${merchantId}/${merchantTransactionId}`+key;

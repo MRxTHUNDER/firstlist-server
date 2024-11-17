@@ -10,7 +10,16 @@ let merchant_id = 'M22N5T3LZUUAV'
 
 const app = express();
 
-app.use(cors());
+
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'], 
+    credentials: true  
+};
+
+app.use(cors(corsOptions)); // Use the customized CORS configuration
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({
@@ -32,7 +41,7 @@ app.get('/', (req, res) => {
 app.post('/order', async (req, res) => { 
 
     try{
-        console.log(req.body);
+        // console.log(req.body);
 
         let merchantTransactionId = req.body.transactionId
 
@@ -42,7 +51,7 @@ app.post('/order', async (req, res) => {
             merchantUserId: req.body.MID,
             amount: req.body.amount * 100,
             currency: req.body.currency,
-            redirectUrl: `https://firstlist.in/status/${merchantTransactionId}`,
+            redirectUrl: `http://localhost:8000/status/${merchantTransactionId}`,
             redirectMode: 'REDIRECT',
             paymentInstrument:{
                 type: 'PAY_PAGE'
@@ -62,6 +71,8 @@ app.post('/order', async (req, res) => {
 
             
         }
+
+        console.log("data",data)
 
         const payload = JSON.stringify(data);
         const payload64 = Buffer.from(payload).toString('base64');
@@ -86,8 +97,9 @@ app.post('/order', async (req, res) => {
         }
 
         axios.request(options).then(function (response)  {
-            console.log(response.data);
-            return res.json(response.data);
+            console.log("resp data",response.data);
+            console.log("dfasfsaf",response.data.data.instrumentResponse.redirectInfo.url)
+            return res.redirect(response.data.data.instrumentResponse.redirectInfo.url);
         }).catch(function (error) {
             console.log(error);
         })
@@ -104,8 +116,8 @@ app.post('/order', async (req, res) => {
 });
 
 app.post('/status/:txnId', async (req, res) => {
-    const merchantTransactionId = req.params.txnId; 
-    const merchantId = req.body.merchantId;
+    const merchantTransactionId = res.req.body.merchantTransactionId;
+    const merchantId = res.req.body.merchantId;
     console.log('Status ID:', merchantTransactionId);
 console.log('Merchant ID:', merchantId);
 
@@ -125,6 +137,7 @@ console.log('Merchant ID:', merchantId);
     };
 
         axios.request(options).then(async(response)=>{
+            console.log("resp",response.data)
             if(response.data.success===true){
                 const url= `http://localhost:5173/DemoDashboard/DemoSuccess`
                 return res.redirect(url);

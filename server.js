@@ -5,8 +5,8 @@ const axios = require('axios');
 const bodyParser = require("body-parser");
 
 const { url } = require('inspector');
-let key = '96434309-7796-489d-8924-ab56988a6076'
-let merchant_id = 'PGTESTPAYUAT86'
+let key = process.env.KEY
+let merchant_id = process.env.MERCHANT_KEY
 
 const app = express();
 
@@ -42,7 +42,7 @@ app.post('/order', async (req, res) => {
             merchantUserId: req.body.MID,
             amount: req.body.amount * 100,
             currency: req.body.currency,
-            redirectUrl: `http://localhost:5173/DemoDashboard/PaymentStatus`,
+            redirectUrl: `http://3.108.87.117:8000/status/${merchantTransactionId}`,
             redirectMode: 'REDIRECT',
             paymentInstrument:{
                 type: 'PAY_PAGE'
@@ -74,7 +74,7 @@ app.post('/order', async (req, res) => {
 
         const options = {
             method: 'POST',
-            url: test_URL,
+            url: prod_URL,
             headers: {
                 accept: 'application/json',
                 'Content-Type': 'application/json',
@@ -103,52 +103,36 @@ app.post('/order', async (req, res) => {
 
 });
 
-app.post('/status', async (req, res) => {
-    try {
-        console.log('Request body:', req.body);
-
-    const { transactionId } = req.body; // Extract transactionId from req.body
-    if (!transactionId) {
-      return res.status(400).send({ message: 'Transaction ID is required', success: false });
-    }
+app.post('/status/:txnId', async (req, res) => {
+    const  merchantTransactionId=res.req.body.transactionId
+    const merchantId = res.req.body.merchantId
     
-        const merchantTransactionId = req.query.id;
-        const merchantId = merchant_id;
-        const keyIndex = 1;
-        const string = `/pg/v1/status/${merchantId}/${merchantTransactionId}` + key;
-        const sha256 = crypto.createHash('sha256').update(string).digest('hex');
-        const checksum = sha256 + '###' + keyIndex;
+    const keyIndex=1;
+    const string=`/pg/v1/status/${merchantId}/${merchantTransactionId}`+key;
+    const sha256=crypto.createHash('sha256').update(string).digest('hex');
+    const checksum=sha256+"###"+keyIndex;
 
-        const options = {
-            method: 'GET',
-            url: `https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/${merchantId}/${merchantTransactionId}`,
-            headers: {
-                accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-VERIFY': checksum,
-                'X-MERCHANT-ID': `${merchantId}`
-            }
-        };
-
-        // Request to get the payment status
-        const response = await axios.request(options);
-
-        if (response.data.success === true) {
-            console.log('Payment Successful');
-            res.redirect('http://localhost:5173/DemoDashboard/DemoSuccess');
-        } else {
-            console.log('Payment Failed');
-            res.redirect('http://localhost:5173/DemoDashboard/DemoFailure');
+    const options={
+        method:"GET",
+        url:`https://api.phonepe.com/apis/hermes/pg/v1/status/${merchantId}/${merchantTransactionId}`,
+        headers:{
+            accept:'application/json',
+            'X-VERIFY':checksum,
+            'X-MERCHANT-ID':`${merchantId}`
         }
-    } catch (error) {
-        console.error('Error while checking payment status:', error);
-        res.status(500).send({
-            message: 'An error occurred while processing the payment status.',
-            success: false
-        });
-    }
-});
+    };
 
+        axios.request(options).then(async(response)=>{
+            if(response.data.success===true){
+                const url= `http://firstlist.in/DemoDashboard/DemoSuccess`
+                return res.redirect(url);
+            }
+            else{
+                const url= `http://firstlist.in/DemoDashboard/DemoFailure`
+                return res.redirect(url);
+            }
+        })
+    })
 
 
 

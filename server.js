@@ -11,14 +11,14 @@ let merchant_id = 'M22N5T3LZUUAV'
 const app = express();
 
 
-// const corsOptions = {
-//     origin: 'http://localhost:5173',
-//     methods: ['GET', 'POST'],
-//     allowedHeaders: ['Content-Type', 'Authorization'], 
-//     credentials: true  
-// };
+const corsOptions = {
+    origin: 'https://firstlist.in/',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'], 
+    credentials: true  
+};
 
-// app.options('*', cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 
 app.use(express.json());

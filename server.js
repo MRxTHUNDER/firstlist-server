@@ -14,7 +14,7 @@ const app = express();
 const corsOptions = {
     origin: 'https://firstlist.in,
     methods: ['GET', 'POST'],
-    // allowedHeaders: ['Content-Type', 'Authorization'], 
+    allowedHeaders: ['Content-Type', 'Authorization'], 
     credentials: true  
 };
 

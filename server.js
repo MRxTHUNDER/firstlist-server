@@ -12,7 +12,7 @@ const app = express();
 
 
 const corsOptions = {
-    origin: 'https://firstlist.in/,http://localhost:3000',
+    origin: 'https://firstlist.in,
     methods: ['GET', 'POST'],
     // allowedHeaders: ['Content-Type', 'Authorization'], 
     credentials: true  

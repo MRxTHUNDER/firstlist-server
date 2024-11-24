@@ -5,12 +5,22 @@ const axios = require('axios');
 const bodyParser = require("body-parser");
 
 const { url } = require('inspector');
-let key = '96434309-7796-489d-8924-ab56988a6076'
-let merchant_id = 'PGTESTPAYUAT86'
+let key = '3064fbf3-4d48-458a-8e6d-c086629916f5'
+let merchant_id = 'M22N5T3LZUUAV'
 
 const app = express();
 
-app.use(cors());
+
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'], 
+    credentials: true  
+};
+
+app.options('*', cors(corsOptions));
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({
@@ -28,11 +38,10 @@ app.get('/', (req, res) => {
     res.send('Hello from Express.js');
 });
 
-
 app.post('/order', async (req, res) => { 
 
     try{
-        console.log(req.body);
+        // console.log(req.body);
 
         let merchantTransactionId = req.body.transactionId
 
@@ -42,7 +51,7 @@ app.post('/order', async (req, res) => {
             merchantUserId: req.body.MID,
             amount: req.body.amount * 100,
             currency: req.body.currency,
-            redirectUrl: `http://localhost:5173/DemoDashboard/PaymentStatus`,
+            redirectUrl: `https://firstlist.in`,
             redirectMode: 'REDIRECT',
             paymentInstrument:{
                 type: 'PAY_PAGE'
@@ -63,6 +72,8 @@ app.post('/order', async (req, res) => {
             
         }
 
+        console.log("data",data)
+
         const payload = JSON.stringify(data);
         const payload64 = Buffer.from(payload).toString('base64');
         const keyIndex =1;
@@ -71,7 +82,7 @@ app.post('/order', async (req, res) => {
         const checksum = sha256 + '###' + keyIndex;
 
         
-
+        console.log("Reached in backend")
         const options = {
             method: 'POST',
             url: test_URL,
@@ -83,14 +94,32 @@ app.post('/order', async (req, res) => {
             data: {
                 request: payload64
             }
+        }   
+        console.log("Options")
+        try {
+            const response = await axios.request(options);
+            console.log("Axios response:", response.data);
+        
+            const redirectUrl = response.data?.data?.instrumentResponse?.redirectInfo?.url;
+            if (redirectUrl) {
+                return res.json({ redirectURL: redirectUrl });
+            } else {
+                console.error("Invalid response format:", response.data);
+                return res.status(500).json({
+                    message: "Invalid response from payment gateway",
+                    success: false,
+                });
+            }
+        } catch (error) {
+            console.error("Request failed:", error.message);
+            if (error.response) {
+                console.error("Error response:", error.response.data);
+            }
+            return res.status(500).json({
+                message: "Payment request failed",
+                success: false,
+            });
         }
-
-        axios.request(options).then(function (response)  {
-            console.log(response.data);
-            return res.json(response.data);
-        }).catch(function (error) {
-            console.log(error);
-        })
 
     } catch (error) {
         console.log(error);
@@ -103,55 +132,41 @@ app.post('/order', async (req, res) => {
 
 });
 
-app.post('/status', async (req, res) => {
-    try {
-        console.log('Request body:', req.body);
+app.post('/status/:txnId', async (req, res) => {
+    const merchantTransactionId = res.req.body.merchantTransactionId;
+    const merchantId = res.req.body.merchantId;
+    console.log('Status ID:', merchantTransactionId);
+console.log('Merchant ID:', merchantId);
 
-    const { transactionId } = req.body; // Extract transactionId from req.body
-    if (!transactionId) {
-      return res.status(400).send({ message: 'Transaction ID is required', success: false });
-    }
-    
-        const merchantTransactionId = req.query.id;
-        const merchantId = merchant_id;
-        const keyIndex = 1;
-        const string = `/pg/v1/status/${merchantId}/${merchantTransactionId}` + key;
-        const sha256 = crypto.createHash('sha256').update(string).digest('hex');
-        const checksum = sha256 + '###' + keyIndex;
+    const keyIndex=1;
+    const string=`/pg/v1/status/${merchantId}/${merchantTransactionId}`+key;
+    const sha256=crypto.createHash('sha256').update(string).digest('hex');
+    const checksum=sha256+"###"+keyIndex;
 
-        const options = {
-            method: 'GET',
-            url: `https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/${merchantId}/${merchantTransactionId}`,
-            headers: {
-                accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-VERIFY': checksum,
-                'X-MERCHANT-ID': `${merchantId}`
-            }
-        };
-
-        // Request to get the payment status
-        const response = await axios.request(options);
-
-        if (response.data.success === true) {
-            console.log('Payment Successful');
-            res.redirect('http://localhost:5173/DemoDashboard/DemoSuccess');
-        } else {
-            console.log('Payment Failed');
-            res.redirect('http://localhost:5173/DemoDashboard/DemoFailure');
+    const options={
+        method:"GET",
+        url:`https://api.phonepe.com/apis/hermes/pg/v1/status/${merchantId}/${merchantTransactionId}`,
+        headers:{
+            accept:'application/json',
+            'X-VERIFY':checksum,
+            'X-MERCHANT-ID':`${merchantId}`
         }
-    } catch (error) {
-        console.error('Error while checking payment status:', error);
-        res.status(500).send({
-            message: 'An error occurred while processing the payment status.',
-            success: false
-        });
-    }
-});
+    };
 
+        axios.request(options).then(async(response)=>{
+            console.log("resp",response.data)
+            if(response.data.success===true){
+                const url= `http://localhost:5173/DemoDashboard/DemoSuccess`
+                return res.redirect(url);
+            }
+            else{
+                const url= `http://localhost:5173/DemoDashboard/DemoFailure`
+                return res.redirect(url);
+            }
+        })
+    })
 
 
 
 
 app.listen(8000, () => { console.log('Server is running on port 8000') });
-

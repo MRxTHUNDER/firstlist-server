@@ -12,13 +12,13 @@ const app = express();
 
 
 const corsOptions = {
-    origin: 'http://localhost:5173',
+    origin: 'https://firstlist.in/,http://localhost:3000',
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'], 
+    // allowedHeaders: ['Content-Type', 'Authorization'], 
     credentials: true  
 };
 
-app.options('*', cors(corsOptions));
+app.use(cors(corsOptions))
 
 
 app.use(express.json());
@@ -51,7 +51,7 @@ app.post('/order', async (req, res) => {
             merchantUserId: req.body.MID,
             amount: req.body.amount * 100,
             currency: req.body.currency,
-            redirectUrl: `https://firstlist.in`,
+            redirectUrl: `https://firstlist.in/`,
             redirectMode: 'REDIRECT',
             paymentInstrument:{
                 type: 'PAY_PAGE'
@@ -85,7 +85,7 @@ app.post('/order', async (req, res) => {
         console.log("Reached in backend")
         const options = {
             method: 'POST',
-            url: test_URL,
+            url: prod_URL,
             headers: {
                 accept: 'application/json',
                 'Content-Type': 'application/json',
@@ -95,11 +95,12 @@ app.post('/order', async (req, res) => {
                 request: payload64
             }
         }   
-        console.log("Options")
+        console.log("=================")
         try {
+            console.log("options",options)
             const response = await axios.request(options);
             console.log("Axios response:", response.data);
-        
+            console.log(",,,,,,,,,,,,,,,,,,,,,")
             const redirectUrl = response.data?.data?.instrumentResponse?.redirectInfo?.url;
             if (redirectUrl) {
                 return res.json({ redirectURL: redirectUrl });

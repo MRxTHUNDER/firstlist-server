@@ -131,12 +131,24 @@ app.post("/order", async (req, res) => {
 });
 
 app.post("/status/:txnId", async (req, res) => {
-  const merchantTransactionId = res.req.body.merchantTransactionId;
-  const merchantId = res.req.body.merchantId;
+  // Extract transaction ID from route parameters
+  const transactionId = req.params.txnId;
+  const merchantTransactionId = transactionId || req.body.merchantTransactionId; // Fallback to body if not in params
+  const merchantId = req.body.merchantId;
+
   console.log("Status ID:", merchantTransactionId);
   console.log("Merchant ID:", merchantId);
 
+  if (!merchantTransactionId || !merchantId) {
+    return res
+      .status(400)
+      .json({ error: "Missing transactionId or merchantId" });
+  }
+
+  const key = "your_secret_key"; // Replace with your actual key
   const keyIndex = 1;
+
+  // Prepare checksum string
   const string = `/pg/v1/status/${merchantId}/${merchantTransactionId}` + key;
   const sha256 = crypto.createHash("sha256").update(string).digest("hex");
   const checksum = sha256 + "###" + keyIndex;
@@ -151,16 +163,25 @@ app.post("/status/:txnId", async (req, res) => {
     },
   };
 
-  axios.request(options).then(async (response) => {
-    console.log("resp", response.data);
+  // Send request to PhonePe API
+  try {
+    const response = await axios.request(options);
+    console.log("Response:", response.data);
+
     if (response.data.success === true) {
-      const url = `http://localhost:5173/DemoDashboard/DemoSuccess`;
-      return res.redirect(url);
+      return res.redirect("https://firstlist.in/DemoDashboard/DemoSuccess");
     } else {
-      const url = `http://localhost:5173/DemoDashboard/DemoFailure`;
-      return res.redirect(url);
+      return res.redirect("https://firstlist.in/DemoDashboard/DemoFailure");
     }
-  });
+  } catch (error) {
+    console.error("Error:", error.message);
+    return res
+      .status(500)
+      .json({
+        error: "Failed to fetch transaction status",
+        details: error.message,
+      });
+  }
 });
 
 app.listen(8000, () => {
